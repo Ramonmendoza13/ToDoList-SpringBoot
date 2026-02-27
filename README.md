@@ -38,7 +38,7 @@ Aplicación web de gestión de tareas desarrollada con Spring Boot como ejercici
 
 1. Clona el repositorio
 ```bash
-git clone https://github.com/tu-usuario/todolist.git
+git clone https://github.com/Ramonmendoza13/todolist.git
 cd todolist
 ```
 
