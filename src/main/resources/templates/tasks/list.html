@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Mis tareas</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; }
+        nav { background: #2c3e50; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        nav a { color: white; text-decoration: none; }
+        .container { max-width: 750px; margin: 30px auto; padding: 0 20px; }
+        .stats { display: flex; gap: 15px; margin-bottom: 25px; }
+        .stat { background: white; padding: 15px 25px; border-radius: 8px; flex: 1; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+        .stat-number { font-size: 2em; font-weight: bold; color: #3498db; }
+        .new-task-form { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+        .new-task-form h3 { margin-bottom: 15px; color: #2c3e50; }
+        .form-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+        input[type="text"] { padding: 9px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }
+        input[name="title"] { flex: 2; min-width: 200px; }
+        input[name="description"] { flex: 3; min-width: 200px; }
+        .btn { padding: 9px 18px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; white-space: nowrap; }
+        .btn-primary { background: #3498db; color: white; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-secondary { background: #95a5a6; color: white; }
+        .task-list { list-style: none; }
+        .task-item { background: white; padding: 15px 20px; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; gap: 15px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+        .task-item.completed { opacity: 0.6; }
+        .task-title { flex: 1; font-size: 15px; }
+        .task-title.completed { text-decoration: line-through; color: #999; }
+        .task-date { font-size: 12px; color: #aaa; }
+        .alert { padding: 10px 15px; border-radius: 4px; margin-bottom: 15px; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-error { background: #f8d7da; color: #721c24; }
+        .empty-state { text-align: center; padding: 50px; color: #aaa; font-size: 1.1em; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <span>📋 To-Do List</span>
+    <div>
+        <!-- th:text establece el texto del elemento -->
+        <!-- ${username} viene del model.addAttribute("username", ...) del controlador -->
+        <span th:text="'Hola, ' + ${username}"></span>
+        &nbsp;·&nbsp;
+        <!-- th:action con @{} es la forma correcta de poner URLs en Thymeleaf -->
+        <!-- Incluye automáticamente el CSRF token -->
+        <form th:action="@{/logout}" method="post" style="display:inline">
+            <button type="submit" class="btn btn-secondary" style="font-size:13px; padding:5px 12px;">
+                Cerrar sesión
+            </button>
+        </form>
+    </div>
+</nav>
+
+<div class="container">
+    <h2 style="margin-bottom: 20px; color: #2c3e50;">Mis tareas</h2>
+
+    <!-- Mensajes flash -->
+    <!-- th:if comprueba si el atributo existe en el modelo -->
+    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+    <!-- Estadísticas -->
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-number" th:text="${pendingCount}">0</div>
+            <div>Pendientes</div>
+        </div>
+        <div class="stat">
+            <div class="stat-number" style="color: #27ae60;" th:text="${completedCount}">0</div>
+            <div>Completadas</div>
+        </div>
+    </div>
+
+    <!-- Formulario de nueva tarea -->
+    <div class="new-task-form">
+        <h3>➕ Nueva tarea</h3>
+        <!-- th:action genera la URL correcta e incluye el CSRF token automáticamente -->
+        <form th:action="@{/tasks}" method="post">
+            <div class="form-row">
+                <input type="text" name="title" placeholder="¿Qué hay que hacer?" required>
+                <input type="text" name="description" placeholder="Descripción (opcional)">
+                <button type="submit" class="btn btn-primary">Añadir</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de tareas -->
+    <!-- th:if muestra el bloque solo si tasks no está vacío -->
+    <ul class="task-list" th:if="${not #lists.isEmpty(tasks)}">
+
+        <!-- th:each itera la lista — equivale a @foreach en Blade -->
+        <!-- th:each="task : ${tasks}" → para cada task en tasks -->
+        <li th:each="task : ${tasks}"
+            class="task-item"
+            th:classappend="${task.completed} ? 'completed' : ''">
+
+            <!-- Botón para marcar como completada/pendiente -->
+            <form th:action="@{/tasks/{id}/toggle(id=${task.id})}" method="post">
+                <button type="submit"
+                        class="btn"
+                        style="font-size: 1.3em; background: none; padding: 0;"
+                        th:title="${task.completed} ? 'Marcar como pendiente' : 'Marcar como completada'">
+                    <!-- th:text cambia el texto según condición (operador ternario) -->
+                    <span th:text="${task.completed} ? '✅' : '⬜'"></span>
+                </button>
+            </form>
+
+            <!-- Título y descripción -->
+            <div style="flex: 1;">
+                <div class="task-title"
+                     th:classappend="${task.completed} ? 'completed' : ''"
+                     th:text="${task.title}">
+                </div>
+                <!-- th:if muestra esto solo si description no es null ni vacío -->
+                <div th:if="${task.description != null and !task.description.isEmpty()}"
+                     style="font-size: 13px; color: #888; margin-top: 3px;"
+                     th:text="${task.description}">
+                </div>
+                <div class="task-date"
+                     th:text="${#temporals.format(task.createdAt, 'dd/MM/yyyy HH:mm')}">
+                </div>
+            </div>
+
+            <!-- Botón eliminar -->
+            <form th:action="@{/tasks/{id}/delete(id=${task.id})}" method="post">
+                <button type="submit" class="btn btn-danger"
+                        onclick="return confirm('¿Eliminar esta tarea?')">
+                    🗑️
+                </button>
+            </form>
+        </li>
+    </ul>
+
+    <!-- Estado vacío: se muestra si no hay tareas -->
+    <div class="empty-state" th:if="${#lists.isEmpty(tasks)}">
+        <p>😊 No tienes tareas. ¡Añade una arriba!</p>
+    </div>
+</div>
+
+</body>
+</html>

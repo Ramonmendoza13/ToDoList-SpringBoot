@@ -1,0 +1,22 @@
+# docker-compose.yml
+
+version: '3.8'
+
+services:
+
+  # ── Servicio de la Aplicación Spring Boot ─────────────────────
+  app:
+    build: .               # Construye la imagen usando el Dockerfile de este directorio
+    container_name: todolist_app
+
+    ports:
+      - "8080:8080"        # Puerto local:Puerto del contenedor
+
+    # Volumen para persistir el archivo de H2.
+    # Sin esto, cada vez que el contenedor se reinicia se pierden los datos.
+    volumes:
+      - h2_data:/app/data
+
+# ── Volúmenes ─────────────────────────────────────────────────────
+volumes:
+  h2_data:    # Volumen con nombre para persistir el archivo de base de datos H2
